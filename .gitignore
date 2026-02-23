@@ -1,3 +1,5 @@
+requêtes/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -204,4 +206,8 @@ cython_debug/
 # Marimo
 marimo/_static/
 marimo/_lsp/
+<<<<<<< HEAD
 __marimo__/
+=======
+__marimo__/
+>>>>>>> db81dc4 (premier commit)
