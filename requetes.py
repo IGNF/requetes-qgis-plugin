@@ -22,13 +22,13 @@
  ***************************************************************************/
 """
 import json
+import re
 import subprocess
-
+import sqlite3
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QInputDialog, QMessageBox, QDialog, QListWidgetItem, QComboBox, QFileDialog, QProgressBar, \
-    QApplication
+from PyQt5.QtWidgets import QInputDialog, QMessageBox, QDialog, QFileDialog,QApplication
 from PyQt5.uic import loadUi
-from qgis.core import QgsProject,QgsExpression
+from qgis.core import QgsProject,QgsExpression,QgsProviderRegistry,QgsVectorLayer,QgsFeatureRequest
 from qgis.PyQt.QtGui import QIcon
 import os.path
 from pathlib import Path
@@ -37,6 +37,7 @@ from .fonction import *
 
 
 REP_REQUETES = "requêtes"
+CLEABS = "cleabs"
 
 TITRE = "Requêtes"
 VERSION = "0.1"
@@ -77,73 +78,29 @@ class Requete:
 
         liste_req = self.get_list_requete_unique()
         self.dlg_requete_unique.comboBox_requetes.addItems(liste_req)
-        self.dlg_requete_unique.pushButtonExecuter.clicked.connect(self.on_run_requete)
+
+        # self.dlg_requete_unique.pushButtonExecuter.clicked.connect(self.on_run_requete)
+        # self.dlg_requete_unique.pushButtonExecuter.clicked.connect(self.on_run_requete_via_python)
+        self.dlg_requete_unique.pushButtonExecuter.clicked.connect(self.on_run_requete_via_ogr)
+
+
         self.dlg_requete_unique.pushButton_tester.clicked.connect(self.on_test_requetes)
         self.dlg_requete_unique.pushButtonLog.clicked.connect(self.on_afficher_log)
 
     def on_test_requetes(self):
         # print(self.get_dossier_requetes())
         # self.dlg_requete_unique.progressBar.show()
-        self.on_run_requete(all = True)
+        self.on_run_requete_via_ogr(all = True)
         # self.dlg_requete_unique.progressBar.hide()
 
-    def get_mode_requete(self,fichier_requete):
-        mode = ""
-        # test si le fichier est enregistré en unicode ou autre
-        try:
-            with open(fichier_requete, "r", encoding="utf-8") as f:
-                for ligne in f:
-                    ligne = ligne.strip()
-                    # Vérifie si la ligne contient un commentaire commençant par --
-                    if ligne.startswith("--MODE="):
-                        # Récupère ce qu'il y a après --
-                        contenu = ligne[7:].strip()
-                        mode = contenu
-        except UnicodeDecodeError:
-            with open(fichier_requete, "r", encoding="latin-1") as f:
-                for ligne in f:
-                    ligne = ligne.strip()
-                    # Vérifie si la ligne contient un commentaire commençant par --
-                    if ligne.startswith("--MODE="):
-                        # Récupère ce qu'il y a après --MODE=
-                        contenu = ligne[7:].strip()
-                        mode = contenu
-        return mode
 
-
-    def get_list_to_create(self,fichier_requete):
-        list_to_create = []
-        with open(fichier_requete, "r", encoding="utf-8") as f:
-            for ligne in f:
-                ligne = ligne.strip()
-                # Vérifie si la ligne contient un commentaire commençant par --
-                if ligne.startswith("--LISTE="):
-                    # Récupère ce qu'il y a après --LISTE=
-                    contenu = ligne[8:].strip()
-                    list_to_create = [item.strip() for item in contenu.split(",")]
-        return list_to_create
-
-    def get_layer_request(self,fichier_requete):
-        layer = ""
-        with open(fichier_requete, "r", encoding="utf-8") as f:
-            for ligne in f:
-                ligne = ligne.strip()
-                # Vérifie si la ligne contient un commentaire commençant par --
-                if ligne.startswith("--LAYER="):
-                    # Récupère ce qu'il y a après --LAYER=
-                    contenu = ligne[8:].strip()
-                    layer = contenu
-        return layer
-
-
-
-
-    def on_run_requete(self, all = False):
+    def on_run_requete_via_python(self, all = False):
+        path_sqlite = QgsProject.instance().fileName().replace(".qgz", "_espaceco.sqlite")
         if all:
-            fichiers  = self.get_list_requete_unique()
-        else :
+            fichiers = self.get_list_requete_unique()
+        else:
             fichier_unique = self.dlg_requete_unique.comboBox_requetes.currentText()
-            fichiers  = [fichier_unique]
+            fichiers = [fichier_unique]
 
         self.dlg_requete_unique.progressBar.setRange(0, len(fichiers))
         self.dlg_requete_unique.progressBar.setValue(0)
@@ -151,53 +108,135 @@ class Requete:
         QApplication.processEvents()
         comp = 1
         compt_requete_ok = 0
+
         for fichier in fichiers:
             self.dlg_requete_unique.progressBar.setValue(comp)
-            fic_req_sel = os.path.join(self.get_dossier_requetes(), fichier)
+            requete = self.load_requete(fichier)
+            # fic_req_sel = os.path.join(self.get_dossier_requetes(), fichier)
+            # try:
+            #     with open(fic_req_sel, "r", encoding="utf-8") as f:
+            #         requete = f.read().strip()
+            # except UnicodeDecodeError:
+            #     with open(fic_req_sel, "r", encoding="latin-1") as f:
+            #         requete = f.read().strip()
+
+            conn = sqlite3.connect(path_sqlite)
+            print("OK : connexion ouverte")
+            conn.enable_load_extension(True)
+            # Charger SpatiaLite
             try:
-                with open(fic_req_sel, "r", encoding="utf-8") as f:
-                    requete = f.read().strip()
-            except UnicodeDecodeError:
-                with open(fic_req_sel, "r", encoding="latin-1") as f:
-                    requete = f.read().strip()
-            exp = QgsExpression(requete)
-            if exp.hasParserError():
-                erreur = exp.parserErrorString()
-                if erreur.strip() == "syntax error, unexpected LT":
-                    log(f"{comp}-{fichier} : ERREUR: les caractères < et > sont interdits")
-                else:
-                    log(f"{comp}-{fichier} : ERREUR: \t{erreur}")
-            else:
-                mode = self.get_mode_requete(fic_req_sel)
-                if mode == "SELECT":
-                    try:
-                        layer_name = self.get_layer_request(fic_req_sel)
-                        layers = QgsProject.instance().mapLayersByName(layer_name)
-                        if not layers:
-                            log(f"{comp}-{fichier} : ERREUR: couche '{layer_name}' introuvable")
-                        else:
-                            layer = layers[0]
-                            layer.selectByExpression(requete)
-                            nb_sel = layer.selectedFeatureCount()
-                            log(f"{comp}-{fichier} : OK ({nb_sel} entités sélectionnées)")
-                            compt_requete_ok += 1
-                            # creation d'une liste
-                            nom_liste = self.get_list_to_create(fic_req_sel)
-                            if nom_liste != []:
-                                print("creation de la liste : ",nom_liste)
-                                fichier_liste = os.path.join(get_dossier_listes(), f"{nom_liste}.json")
-                                dico = get_dico_selection(layer)
-                                with open(fichier_liste, "w", encoding="utf-8") as f:
-                                    json.dump(dico, f, indent=2, ensure_ascii=False)
+                conn.load_extension("mod_spatialite")
+                print("OK : SpatiaLite chargé")
+            except Exception as e:\
+                print("ERREUR chargement SpatiaLite :", e)
+            cur = conn.cursor()
+            cur.execute(requete)
+            print(cur.fetchall())
+            conn.close()
 
-
-
-                    except Exception as e:
-                        log(f"{comp}-{fichier} : ERREUR inconnue : {str(e)}")
             comp += 1
-        log(f"===== requêtes traitées, {compt_requete_ok} réussies, {comp-1-compt_requete_ok} en erreur ======")
+            self.dlg_requete_unique.progressBar.hide()
+
+            # return rows
+        log(f"===== requêtes traitées, {compt_requete_ok} réussies, {comp - 1 - compt_requete_ok} en erreur ======")
+
+    def on_run_requete_via_ogr(self, all = False):
+        path_sqlite = QgsProject.instance().fileName().replace(".qgz", "_espaceco.sqlite")
+        provider = QgsProviderRegistry.instance().providerMetadata("ogr")
+        conn = provider.createConnection(path_sqlite, {})
+        if all:
+            fichiers = self.get_list_requete_unique()
+        else:
+            fichier_unique = self.dlg_requete_unique.comboBox_requetes.currentText()
+            fichiers = [fichier_unique]
+
+        self.dlg_requete_unique.progressBar.setRange(0, len(fichiers))
+        self.dlg_requete_unique.progressBar.setValue(0)
+        self.dlg_requete_unique.progressBar.show()
+        QApplication.processEvents()
+        comp = 1
+        compt_requete_ok = 0
+        list_requete_bonne = []
+
+        for fichier in fichiers:
+            self.dlg_requete_unique.progressBar.setValue(comp)
+            requete = self.load_requete(fichier)
+            try:
+
+                # réécrire la requete pour remplacer option(select) par une selection dans la table des couches
+                mode_select = False
+                old_requete = requete
+                requete = requete.replace("Options(Select)","")
+                if requete != old_requete:
+                    mode_select = True
+                # idem pour creation de liste
+                # ......
+
+                conn = sqlite3.connect(path_sqlite)
+                try:
+                    conn.enable_load_extension(True)
+                except Exception as e: \
+                        print("ERREUR chargement SpatiaLite :", e)
+                conn.load_extension("mod_spatialite")
+                cur = conn.cursor()
+                cur.execute(requete)
+                rows = cur.fetchall()
+
+                if mode_select:
+                    layer_match = re.search(r'FROM\s+([^\s]+)', requete, re.IGNORECASE)
+                    layer = QgsProject.instance().mapLayersByName(layer_match.group(1))[0]
+                    # print("layer = ",layer.group(1))
+
+                    # récupérer les noms des colonnes
+                    col_names = [desc[0] for desc in cur.description]
+                    # trouver l'index de l'identifiant
+                    if "cleabs" in col_names:
+                        id_cleabs = col_names.index("cleabs")
+                        cleabs = [row[id_cleabs] for row in rows]
+                        list_id = self.get_ids_from_cleabs(layer,cleabs)
+                        layer.selectByIds(list_id)
+
+                print(f"{fichier} : nombre d'entités trouvées = {len(rows)}")
+                log(f"{comp}-{fichier} : OK ({len(rows)} entités trouvées)")
+                list_requete_bonne.append(fichier)
+                compt_requete_ok += 1
+            except Exception as e:
+                print("Erreur SQL :", e)
+                log(f"{comp}-{fichier} : ERREUR:\n {str(e)}\n")
+            comp += 1
+        log(f"===== requêtes traitées, {compt_requete_ok} réussies, {comp - 1 - compt_requete_ok} en erreur ======")
+        for fic_req in list_requete_bonne:
+            log(f" Requêtes ok =  {fic_req}")
         self.dlg_requete_unique.progressBar.hide()
-        # self.dlg_requete_unique.accept()
+
+    def get_ids_from_cleabs(self,layer: QgsVectorLayer, cleabs_list: list[str]) -> list:
+        """
+            Retourne la liste des ids correspondant aux cleabs donées
+            :param layer: QgsVectorLayer
+            :param cleabs_list: Liste des valeurs à rechercher dans le champ CLEABS
+            :return: list[int]
+            """
+        # ids = [feature.id() for feature in layer.getFeatures() if feature[CLEABS] in cleabs]
+        if not cleabs_list:
+            return []
+
+        # exemple : "cleabs" IN ('TRONROUT0000000010822670', 'TRONROUT0000000294135247')
+        expr = QgsExpression(f'"{CLEABS}" IN ({", ".join(f"\'{v}\'" for v in cleabs_list)})')
+        request = QgsFeatureRequest(expr)
+        ids = [feat.id() for feat in layer.getFeatures(request)]
+        return ids
+
+    def load_requete(self,fichier):
+        fic_req_sel = os.path.join(self.get_dossier_requetes(), fichier)
+        try:
+            with open(fic_req_sel, "r", encoding="utf-8") as f:
+                requete = f.read().strip()
+        except UnicodeDecodeError:
+            with open(fic_req_sel, "r", encoding="latin-1") as f:
+                requete = f.read().strip()
+        return requete
+
+
 
     def run_requete_enchaine(self,requete):
         print("execution de requete enchainée : ",requete)
