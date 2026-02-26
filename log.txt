@@ -1,4 +1,0 @@
-1-requeteReq_Larg_chaussee_0.txt : OK (121 entités sélectionnées)
-===== requêtes traitées, 1 réussies, 0 en erreur ======
-1-requeteReq_Nb_voies_0.txt : OK (105 entités sélectionnées)
-===== requêtes traitées, 1 réussies, 0 en erreur ======
