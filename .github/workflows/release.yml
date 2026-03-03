@@ -21,11 +21,11 @@ jobs:
 
       - name: Build plugin zip
         run: |
-          zip -r plugin_maitre_${{ github.ref_name }}.zip . -x ".git/*" ".github/*"
+          zip -r requete_${{ github.ref_name }}.zip . -x ".git/*" ".github/*"
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: plugin_maitre_${{ github.ref_name }}.zip
+          files: requete_${{ github.ref_name }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
