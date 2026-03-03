@@ -3,7 +3,7 @@ name: Release QGIS Plugin
 on:
   push:
     tags:
-      - 'v*'
+      - '*'
 
 jobs:
   build-release:
@@ -21,7 +21,7 @@ jobs:
 
       - name: Build plugin zip
         run: |
-          zip -r plugin_maitre_${{ github.ref_name }}.zip . -x ".git/*" ".github/*"
+          zip -r "(IGN)requete.zip" . -x ".git/*" ".github/*"
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
