@@ -3,14 +3,14 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=AssistantComplex
+name=IGN Gestionnaire de requêtes sql
 qgisMinimumVersion=3.0
 description=requêtes
 version=0.1
 author=Gérôme PECHEUR (IGN)
 email=gerome.pecheur@ign.fr
 
-about=Assisstant complexe
+about=Gestionnaire de requêtes
 
 tracker=http://bugs
 repository=http://repo
