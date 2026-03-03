@@ -142,8 +142,6 @@ class Requete:
 
     def on_run_requete_via_ogr(self, all = False):
         path_sqlite = QgsProject.instance().fileName().replace(".qgz", "_espaceco.sqlite")
-        provider = QgsProviderRegistry.instance().providerMetadata("ogr")
-        conn = provider.createConnection(path_sqlite, {})
         if all:
             fichiers = self.get_list_requete_unique()
         else:
@@ -167,6 +165,11 @@ class Requete:
                 mode_select = False
                 old_requete = requete
                 requete = requete.replace("Options(Select)","")
+
+                # suppression de la partie Topo(Intersecting) qui ne fonctionne pas dans SpatiaLite
+                requete = re.sub(r'Topo\s*\(\s*Intersecting\s*"[^"]+"\s*\)','', requete,flags=re.IGNORECASE)
+
+
                 if requete != old_requete:
                     mode_select = True
                 # idem pour creation de liste
@@ -180,6 +183,7 @@ class Requete:
                 conn.load_extension("mod_spatialite")
                 cur = conn.cursor()
                 cur.execute(requete)
+                # print([t[0] for t in cur.fetchall()])
                 rows = cur.fetchall()
 
                 if mode_select:
