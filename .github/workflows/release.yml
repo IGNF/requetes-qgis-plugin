@@ -21,11 +21,16 @@ jobs:
 
       - name: Build plugin zip
         run: |
-          zip -r "(IGN)requetes.zip" . -x ".git/*" ".github/*"
+          mkdir -p IGN_requetes
+          rsync -av --progress . IGN_requetes/ \
+            --exclude .git \
+            --exclude .github \
+            --exclude IGN_requetes
+          zip -r IGN_requetes.zip IGN_requetes
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: "(IGN)requetes.zip"
+          files: "IGN_requetes.zip"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
