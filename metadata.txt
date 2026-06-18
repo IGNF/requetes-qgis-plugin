@@ -3,7 +3,7 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=IGN Gestionnaire de requêtes
+name=IGN Gestionnaire de requêtes sql
 qgisMinimumVersion=3.0
 qgisMaximumVersion=4.99
 description=requêtes
