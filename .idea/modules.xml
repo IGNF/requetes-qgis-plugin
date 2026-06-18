@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/(IGN)assistant_complexe.iml" filepath="$PROJECT_DIR$/.idea/(IGN)assistant_complexe.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/IGN_requetes.iml" filepath="$PROJECT_DIR$/.idea/IGN_requetes.iml" />
     </modules>
   </component>
 </project>
