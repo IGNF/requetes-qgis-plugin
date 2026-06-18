@@ -21,20 +21,18 @@
  *                                                                         *
  ***************************************************************************/
 """
-import json
 import re
 import subprocess
 import sqlite3
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QInputDialog, QMessageBox, QDialog, QFileDialog,QApplication
-from PyQt5.uic import loadUi
-from qgis.core import QgsProject,QgsExpression,QgsProviderRegistry,QgsVectorLayer,QgsFeatureRequest
-from qgis.PyQt.QtGui import QIcon
+
+from qgis.PyQt.QtWidgets import QFileDialog,QApplication,QAction
+from qgis.core import QgsExpression,QgsVectorLayer,QgsFeatureRequest
 import os.path
 from pathlib import Path
 
 from .fonction import *
-
+from .mapping_version import *
+from .recherche import *
 
 REP_REQUETES = "requêtes"
 CLEABS = "cleabs"
@@ -54,6 +52,9 @@ def log(message):
 class Requete:
     def __init__(self, iface):
 
+        self._rep_requete = None
+        self.action = None
+        self.dlgmain = None
         self.iface = iface
 
     def get_dossier_requetes(self):
@@ -68,21 +69,16 @@ class Requete:
         return list_requete
 
     def ini_combo_requete(self):
-        self.dlg_requete_unique = QDialog()
-        self.dlg_requete_unique.setParent(self.iface.mainWindow())
+        self.dlg_requete_unique = QDialog(self.iface.mainWindow())
         loadUi(os.path.join(os.path.dirname(__file__),"requete_unique.ui"), self.dlg_requete_unique)
         self.dlg_requete_unique.setWindowTitle("Exécuter une requête")
-        self.dlg_requete_unique.setWindowFlags(Qt.Dialog | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
-
         self.dlg_requete_unique.progressBar.hide()
-
         liste_req = self.get_list_requete_unique()
         self.dlg_requete_unique.comboBox_requetes.addItems(liste_req)
 
         # self.dlg_requete_unique.pushButtonExecuter.clicked.connect(self.on_run_requete)
         # self.dlg_requete_unique.pushButtonExecuter.clicked.connect(self.on_run_requete_via_python)
         self.dlg_requete_unique.pushButtonExecuter.clicked.connect(self.on_run_requete_via_ogr)
-
 
         self.dlg_requete_unique.pushButton_tester.clicked.connect(self.on_test_requetes)
         self.dlg_requete_unique.pushButtonLog.clicked.connect(self.on_afficher_log)
@@ -240,13 +236,32 @@ class Requete:
                 requete = f.read().strip()
         return requete
 
+    def on_recherche(self):
+        Rech = RechercheDialog(self.iface)
+        Rech.Affiche_dial()
+
+    def on_req_unique(self):
+        self.ini_combo_requete()
+        self.dlg_requete_unique.progressBar.setValue(0)
+        self.dlg_requete_unique.show()
+
+    def on_req_enchaine(self):
+        fichier, _ = QFileDialog.getOpenFileName(
+            None,  # parent
+            "Sélectionnez un fichier",  # titre
+            self.get_dossier_requetes(),  # répertoire initial
+            "Fichiers text (*.txt)"  # filtres
+        )
+        self.run_requete_enchaine(fichier)
 
 
     def run_requete_enchaine(self,requete):
         print("execution de requete enchainée : ",requete)
 
     def initGui(self):
-        pass
+        self.action = QAction("Requêtes", self.iface.mainWindow())
+        self.action.setShortcut("Ctrl+R")
+        self.action.triggered.connect(self.run)
 
     def unload(self):
         pass
@@ -259,6 +274,9 @@ class Requete:
             subprocess.Popen(['start', '', fichier], shell=True)
 
     def run(self):
+
+        if self.dlgmain is not None and self.dlgmain.isVisible():
+            return
         # suppression du log
         if os.path.exists(os.path.join(os.path.dirname(__file__), "log.txt")):
             os.remove(os.path.join(os.path.dirname(__file__), "log.txt"))
@@ -274,41 +292,18 @@ class Requete:
 
         self.set_dossier_requetes()
 
-        list_type_requete = ["Requête unique","Requête enchainée" ]
-        dialog = QInputDialog()
-        dialog.setComboBoxItems(list_type_requete)
-        dialog.setWindowTitle("Choisir ...")
-        dialog.setLabelText("Type de requête :")
-        chemin_icon = os.path.join(os.path.dirname(__file__),"icons","icon_principal.png")
-        dialog.setWindowIcon(QIcon(chemin_icon))
-        choix = ""
-
-        if dialog.exec_():
-            choix = dialog.textValue()
-
-        # requete unique
-        if choix == list_type_requete[0]:
-            self.ini_combo_requete()
-            self.dlg_requete_unique.progressBar.setValue(0)
-            #
-            self.dlg_requete_unique.show()
-
-        # requetes enchainées
-        elif choix == list_type_requete[1]:
-            # Ouvre une boîte de dialogue pour choisir un fichier
-            fichier, _ = QFileDialog.getOpenFileName(
-                None,  # parent
-                "Sélectionnez un fichier",  # titre
-                self.get_dossier_requetes(),  # répertoire initial
-                "Fichiers text (*.txt)"  # filtres
-            )
-            self.run_requete_enchaine(fichier)
-
-
-        # # Run the dialog event loop
-        # result = self.dlg.exec_()
+        self.dlgmain = QDialog(self.iface.mainWindow())
+        loadUi(os.path.dirname(__file__) + "/main.ui", self.dlgmain)
+        self.dlgmain.setWindowTitle("requêtes")
+        self.dlgmain.pushButton_rech.clicked.connect(self.on_recherche)
+        self.dlgmain.pushButton_req_unique.clicked.connect(self.on_req_unique)
+        self.dlgmain.pushButton_reg_enchaine.clicked.connect(self.on_req_enchaine)
+        self.dlgmain.show()
+        # result = self.dlgmain.exec()
         # # See if OK was pressed
         # if result:
         #     # Do something useful here - delete the line containing pass and
         #     # substitute with your code.
         #     pass
+
+
