@@ -5,15 +5,18 @@
 [general]
 name=IGN Gestionnaire de requêtes sql
 qgisMinimumVersion=3.0
+qgisMaximumVersion=4.99
 description=requêtes
 version=0.1
 author=Gérôme PECHEUR (IGN)
 email=gerome.pecheur@ign.fr
+license=GNU AGPL v3
 
 about=Gestionnaire de requêtes
 
-tracker=http://bugs
-repository=http://repo
+homepage=http://homepage
+tracker=https://github.com/IGNF/requetes-qgis-plugin/issues
+repository=https://github.com/IGNF/requetes-qgis-plugin
 # End of mandatory metadata
 
 # Recommended items:
@@ -25,7 +28,6 @@ hasProcessingProvider=no
 # Tags are comma separated with spaces allowed
 tags=python
 
-homepage=http://homepage
 category=Plugins
 icon=icons/icon_principal.png
 # experimental flag
