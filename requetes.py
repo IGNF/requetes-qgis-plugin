@@ -237,8 +237,8 @@ class Requete:
         return requete
 
     def on_recherche(self):
-        Rech = RechercheDialog(self.iface)
-        Rech.Affiche_dial()
+        self.Rech = RechercheDialog(self.iface)
+        self.Rech.Affiche_dial()
 
     def on_req_unique(self):
         self.ini_combo_requete()
