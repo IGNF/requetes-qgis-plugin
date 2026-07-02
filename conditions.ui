@@ -47,7 +47,7 @@
    <item row="0" column="0">
     <layout class="QGridLayout" name="gridLayout">
      <item row="2" column="4" rowspan="3">
-      <widget class="QListWidget" name="listWidget_3"/>
+      <widget class="QListWidget" name="listWidget_affiche_condition"/>
      </item>
      <item row="1" column="2">
       <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -99,7 +99,7 @@
       </widget>
      </item>
      <item row="3" column="3">
-      <widget class="QPushButton" name="pushButton_3">
+      <widget class="QPushButton" name="pushButton_suppr">
        <property name="text">
         <string>Suppr</string>
        </property>
@@ -113,10 +113,10 @@
       </widget>
      </item>
      <item row="4" column="2">
-      <widget class="QListWidget" name="listWidget"/>
+      <widget class="QListWidget" name="listWidget_valeur"/>
      </item>
      <item row="2" column="3">
-      <widget class="QPushButton" name="pushButton_2">
+      <widget class="QPushButton" name="pushButton_add">
        <property name="text">
         <string>Plus</string>
        </property>

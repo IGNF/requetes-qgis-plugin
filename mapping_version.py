@@ -9,6 +9,7 @@ try :
     WindowCloseButtonHint = Qt.WindowType.WindowCloseButtonHint
     WindowTitleHint = Qt.WindowType.WindowTitleHint
     WindowStaysOnTopHint = Qt.WindowType.WindowStaysOnTopHint
+    ItemIsEditable = Qt.ItemFlag.ItemIsEditable
     # Checked = Qt.CheckState.Checked
     # Unchecked = Qt.CheckState.Unchecked
     # ItemIsEnabled = Qt.ItemFlag.ItemIsEnabled
@@ -47,6 +48,7 @@ except :
     WindowCloseButtonHint = Qt.WindowCloseButtonHint
     WindowTitleHint = Qt.WindowTitleHint
     WindowStaysOnTopHint = Qt.WindowStaysOnTopHint
+    ItemIsEditable = Qt.ItemIsEditable
     # Checked = Qt.Checked
     # Unchecked = Qt.Unchecked
     # ItemIsEnabled = Qt.ItemIsEnabled
