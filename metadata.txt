@@ -3,8 +3,8 @@
 # This file should be included when you package your plugin.# Mandatory items:
 
 [general]
-name=IGN Gestionnaire de requêtes
-qgisMinimumVersion=3.0
+name=IGN Requêtes
+qgisMinimumVersion=3.34
 qgisMaximumVersion=4.99
 description=requêtes
 version=0.1.0
@@ -39,7 +39,7 @@ deprecated=False
 # Since QGIS 3.8, a comma separated list of plugins to be installed
 # (or upgraded) can be specified.
 # Check the documentation for more information.
-# plugin_dependencies=
+plugin_dependencies=IGN PluginsManager
 
 Category of the plugin: Raster, Vector, Database or Web
 # category=

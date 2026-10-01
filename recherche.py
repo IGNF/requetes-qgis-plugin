@@ -58,15 +58,15 @@ class RechercheDialog:
         self.dlg_champs_attr.pushButton_add.clicked.connect(self.on_ajout_condition)
         self.dlg_champs_attr.comboBox_operateur.addItems(operateurs) # les clés du dico
 
-        self.dico_all_conditions.clear()
+        # self.dico_all_conditions.clear()
         self.dlg_champs_attr.exec()
     # UI===============================================
 
     def onLayerChanged(self,layer):
         self.layer_sel = layer
-        self.dico_all_conditions[self.layer_sel.name()] = {"champ":"",
-                                                           "operateur":"",
-                                                           "valeur":""}
+        self.dico_all_conditions[self.layer_sel.name()] = {"champ":[],
+                                                           "operateur":[],
+                                                           "valeur":[]}
         self.on_add_layer()
 
     def on_add_layer(self):
@@ -126,7 +126,7 @@ class RechercheDialog:
     # condition de recherche :
     def on_champ_changed(self):
         champ = self.dlg_champs_attr.mFieldComboBox.currentField()
-        self.dico_all_conditions[self.layer_sel.name()] = {"champ":champ}
+        self.dico_all_conditions[self.layer_sel.name()]["champ"].append(champ)
         # print(f"champ sélectionné = {champ.name()}")
         valeur = self.get_valeur_from_champ(champ)
         print(f"valeurs uniques = {valeur}")
